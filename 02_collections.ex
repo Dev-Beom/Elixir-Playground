@@ -2,13 +2,12 @@
 list = [3.14, :pie, "Apple"]
 
 # 빠름
-list = ["pie" | list]
-IO.inspect(list)
+["pie" | list]
+|> IO.inspect()
 
 # 느림
-list = list ++ ["yb"]
-# 리스트 이어붙이기
-IO.inspect(list)
+(list ++ ["yb"])
+|> IO.inspect()
 
 list = [1, 2] ++ [3, 4, 1]
 IO.inspect(list)
