@@ -1,18 +1,23 @@
 defmodule Grammar do
-  @moduledoc """
-  Documentation for `Grammar`.
-  """
+  use Application
 
-  @doc """
-  Hello world.
+  def start(_type, _args) do
+    IO.puts("Hello")
 
-  ## Examples
+    # immutable data is known Data
+    list1 = [3, 2, 1]
+    list2 = [4 | list1]
+    IO.inspect(list2)
 
-      iex> Grammar.hello()
-      :world
+    # Coding with Immutable Data
+    name = "elixir"
+    cap_name = String.capitalize(name)
+    IO.inspect(name)
+    IO.inspect(cap_name)
 
-  """
-  def hello do
-    :world
+    Task.start(fn ->
+      :timer.sleep(1000)
+      IO.puts("done sleeping")
+    end)
   end
 end
