@@ -17,3 +17,4 @@
 - [log-level](log-level/lib/log_level.ex)
 - [guessing-game](guessing-game/lib/guessing_game.ex)
 - [kitchen-calculator](kitchen-calculator/lib/kitchen_calculator.ex)
+- [high-school-sweetheart](high-school-sweetheart/lib/high_school_sweetheart.ex)
