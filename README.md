@@ -15,3 +15,4 @@
 - [freelancer-rates](freelancer-rates/lib/freelancer_rates.ex)
 - [language-list](language-list/lib/language_list.ex)
 - [log-level](log-level/lib/log_level.ex)
+- [guessing-game](guessing-game/lib/guessing_game.ex)
