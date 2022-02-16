@@ -16,3 +16,4 @@
 - [language-list](language-list/lib/language_list.ex)
 - [log-level](log-level/lib/log_level.ex)
 - [guessing-game](guessing-game/lib/guessing_game.ex)
+- [kitchen-calculator](kitchen-calculator/lib/kitchen_calculator.ex)
