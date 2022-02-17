@@ -19,3 +19,4 @@
 - [kitchen-calculator](kitchen-calculator/lib/kitchen_calculator.ex)
 - [high-school-sweetheart](high-school-sweetheart/lib/high_school_sweetheart.ex)
 - [bird-count](bird-count/lib/bird_count.ex)
+- [high-score](high-school-sweetheart/lib/high_school_sweetheart.ex)
