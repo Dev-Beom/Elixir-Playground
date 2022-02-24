@@ -20,3 +20,9 @@
 - [high-school-sweetheart](high-school-sweetheart/lib/high_school_sweetheart.ex)
 - [bird-count](bird-count/lib/bird_count.ex)
 - [high-score](high-school-sweetheart/lib/high_school_sweetheart.ex)
+
+## 짧은 세팅
+```
+mysql start
+brew services start mysql@5.7
+```
