@@ -1,6 +1,9 @@
+defmodule Utils.Permutation do
+  def of([]), do: [[]]
+  def of(list), do: for(head <- list, tail <- of(list -- [head]), do: [head | tail])
+end
+
 defmodule Day7 do
-  # TODO input 값 밖으로 빼기, output 값 밖으로 빼기
-  # TODO 순열 합치기
   @opcode_add 1
   @opcode_mul 2
   @opcode_input 3
@@ -29,21 +32,22 @@ defmodule Day7 do
     |> Enum.into(%{})
   end
 
-  defp operation(memory, input), do: operation(memory, 0, input)
+  defp operation(memory, inputs), do: operation(memory, 0, inputs)
 
-  defp operation(memory, address, input) do
-    # IO.inspect(memory)
-    case process(memory, address, input) do
+  defp operation(memory, address, inputs) do
+    case process(memory, address, inputs) do
       {:halt, memory} -> memory
-      {next_address, memory} -> operation(memory, next_address, input)
+      {:output, value} -> value
+      {:input, next_address, memory} -> operation(memory, next_address, tl(inputs))
+      {next_address, memory} -> operation(memory, next_address, inputs)
     end
   end
 
   @doc """
   address에서 옵코드 처리 후 memory 맵 반환
   """
-  @spec process(map(), integer(), integer()) :: {integer(), map()}
-  defp process(memory, address, input) do
+  @spec process(map(), integer(), list()) :: {integer(), map()}
+  defp process(memory, address, inputs) do
     case Map.get(memory, address) |> opcode_and_modes() do
       {@opcode_add, modes} ->
         {address + @offset_next_modify,
@@ -64,10 +68,12 @@ defmodule Day7 do
          )}
 
       {@opcode_input, modes} ->
-        {address + @offset_next_io, read_input(memory, {address + 1, mode(modes, 0)}, input)}
+        {:input, address + @offset_next_io, read_input(memory, {address + 1, mode(modes, 0)}, hd(inputs))}
 
       {@opcode_output, modes} ->
-        {address + @offset_next_io, write_output(memory, {address + 1, mode(modes, 0)})}
+        # {address + @offset_next_io, write_output(memory, {address + 1, mode(modes, 0)})}
+        {_, value} = write_output(memory, {address + 1, mode(modes, 0)})
+        {:output, value}
 
       {@opcode_jump_if_true, modes} ->
         jump_if_true(memory, address, modes)
@@ -115,8 +121,7 @@ defmodule Day7 do
 
   def write_output(memory, addr_mode_value) do
     value = get(memory, addr_mode_value)
-    IO.puts("::-> #{value}")
-    memory
+    {memory, value}
   end
 
   # 첫번째 매개변수가 0이 아닌 경우 두번째 매개변수의 값에 명령 포인터 설정
@@ -173,21 +178,27 @@ defmodule Day7 do
     end
   end
 
-  defp part_1(memory) do
-    IO.puts("PART_1")
-    memory |> operation(1)
+  defp runner(memory, phases) do
+    Enum.reduce(phases, 0, fn phase, sum ->
+      operation(memory, [phase, sum])
+    end)
   end
 
-  defp part_2(memory) do
-    IO.puts("PART_2")
-    memory |> operation(5)
+  defp part_1(memory) do
+    IO.puts("PART_1")
+
+    0..4
+    |> Enum.to_list()
+    |> Utils.Permutation.of()
+    |> Enum.map(&runner(memory, &1))
+    |> Enum.max()
+    |> IO.inspect()
   end
 
   def run(input) do
     # memory = input |> Kino.Input.read() |> strs_to_ints() |> list_to_map()
     memory = input |> strs_to_ints() |> list_to_map()
     part_1(memory)
-    part_2(memory)
   end
 end
 
