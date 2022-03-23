@@ -16,3 +16,5 @@ defmodule Day7 do
     |> Enum.max()
   end
 end
+
+
