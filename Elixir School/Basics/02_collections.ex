@@ -33,7 +33,7 @@ IO.inspect(head)
 tail = tl([3.14, :pie, "apple"])
 IO.inspect(tail)
 
-# 다음과 같이 cons연산자'|'과 패턴 매칭을 활용한 표현도 가능
+# 다음과 같이 cons 연산자'|'과 패턴 매칭을 활용한 표현도 가능
 [head | tail] = [3.14, :pie, "apple"]
 IO.inspect([head, tail])
 
