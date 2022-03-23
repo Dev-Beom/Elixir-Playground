@@ -1,6 +1,6 @@
 defmodule Day2 do
-  @opcode_plus 1
-  @opcode_mult 2
+  @opcode_add 1
+  @opcode_mul 2
   @opcode_exit 99
   @max_number 99
   @offset_noun 1
@@ -43,8 +43,8 @@ defmodule Day2 do
 
   defp exec(memory, idx \\ 0) do
     case Map.get(memory, idx) do
-      @opcode_plus -> mark_plus(memory, idx) |> exec(idx + @offset_next)
-      @opcode_mult -> mark_mult(memory, idx) |> exec(idx + @offset_next)
+      @opcode_add -> mark_plus(memory, idx) |> exec(idx + @offset_next)
+      @opcode_mul -> mark_mult(memory, idx) |> exec(idx + @offset_next)
       @opcode_exit -> memory
     end
   end
@@ -56,31 +56,31 @@ defmodule Day2 do
           memory
           |> Map.put(1, noun)
           |> Map.put(2, verb)
-          |> exec,
+          |> exec(),
         Map.get(new_mem, 0) == target do
       noun * 100 + verb
     end
   end
 
-  def part_1(input) do
+  defp part_1(input) do
     input
-    |> strs_to_ints
-    |> list_to_map
+    |> strs_to_ints()
+    |> list_to_map()
     |> Map.put(1, 12)
     |> Map.put(2, 2)
-    |> exec
+    |> exec()
     |> Map.get(0)
   end
 
-  def part_2(input) do
+  defp part_2(input) do
     input
-    |> strs_to_ints
-    |> list_to_map
+    |> strs_to_ints()
+    |> list_to_map()
     |> get_noun_verb(1969_0720)
   end
 
   def run(input) do
-    input |> part_1 |> IO.inspect()
-    input |> part_2 |> IO.inspect()
+    input |> part_1() |> IO.inspect()
+    input |> part_2() |> IO.inspect()
   end
 end
