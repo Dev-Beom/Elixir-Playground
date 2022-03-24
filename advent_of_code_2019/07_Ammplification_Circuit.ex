@@ -3,6 +3,10 @@ defmodule Utils.Permutation do
   def of(list), do: for(head <- list, tail <- of(list -- [head]), do: [head | tail])
 end
 
+defmodule Amplifier do
+  defstruct phase: 0, next_pointer: 0, memory: %{}, is_finish: false, is_used: false
+end
+
 defmodule Day7 do
   @opcode_add 1
   @opcode_mul 2
@@ -34,10 +38,11 @@ defmodule Day7 do
 
   defp operation(memory, inputs), do: operation(memory, 0, inputs)
 
+  @spec operation(map(), integer(), list()) :: map() | integer()
   defp operation(memory, address, inputs) do
     case process(memory, address, inputs) do
-      {:halt, memory} -> memory
-      {:output, value} -> value
+      {:halt, memory} -> {:halt, memory}
+      {:output, next_address, memory, value} -> {:output, next_address, memory, value}
       {:input, next_address, memory} -> operation(memory, next_address, tl(inputs))
       {next_address, memory} -> operation(memory, next_address, inputs)
     end
@@ -68,12 +73,13 @@ defmodule Day7 do
          )}
 
       {@opcode_input, modes} ->
-        {:input, address + @offset_next_io, read_input(memory, {address + 1, mode(modes, 0)}, hd(inputs))}
+        {:input, address + @offset_next_io,
+         read_input(memory, {address + 1, mode(modes, 0)}, hd(inputs))}
 
       {@opcode_output, modes} ->
         # {address + @offset_next_io, write_output(memory, {address + 1, mode(modes, 0)})}
-        {_, value} = write_output(memory, {address + 1, mode(modes, 0)})
-        {:output, value}
+        {memory, value} = write_output(memory, {address + 1, mode(modes, 0)})
+        {:output, address + @offset_next_io, memory, value}
 
       {@opcode_jump_if_true, modes} ->
         jump_if_true(memory, address, modes)
@@ -178,15 +184,7 @@ defmodule Day7 do
     end
   end
 
-  defp runner(memory, phases) do
-    Enum.reduce(phases, 0, fn phase, sum ->
-      operation(memory, [phase, sum])
-    end)
-  end
-
   defp part_1(memory) do
-    IO.puts("PART_1")
-
     0..4
     |> Enum.to_list()
     |> Utils.Permutation.of()
@@ -195,11 +193,102 @@ defmodule Day7 do
     |> IO.inspect()
   end
 
+  defp part_2(memory) do
+    5..9
+    |> Enum.to_list()
+    |> Utils.Permutation.of()
+    |> Enum.map(fn phases ->
+      # 컴퓨터들 상태 생성해서 배열로 만들어서 놓고
+      # phases를 돌면서 계속 돌면서 reduce while 를 통해 해결 ?
+
+      amps =
+        phases
+        |> Enum.map(
+          &%Amplifier{
+            phase: &1,
+            next_pointer: 0,
+            memory: memory,
+            is_finish: false,
+            is_used: false
+          }
+        )
+
+      feedback_runner(amps, 0)
+      # phases
+      # |> Stream.cycle()
+
+      # |> Enum.reduce_while({computer_map, [0]}, fn
+      #   phase, {cpt_map, :halt} ->
+      #     {:halt, cpt_map[List.last(phases)].outputs |> List.first()}
+
+      #   phase, {cpt_map, outputs} ->
+      #     state = cpt_map[phase]
+      #     {state, outputs} = Computer.process(state, outputs)
+      #     {:cont, {cpt_map |> Map.put(phase, state), outputs}}
+      # end)
+    end)
+  end
+
+  defp runner(memory, phases) do
+    Enum.reduce(phases, 0, fn phase, sum ->
+      {:output, _next_address, _memory, value} = operation(memory, [phase, sum])
+      value
+    end)
+  end
+
+  defp feedback_runner(amps, finish) do
+    [head | tail] = amps
+
+    # {:output, next_address, memory, value} =
+    #   operation(head.memory, head.next_pointer, [head.phase])
+
+    # new_head = %{head | is_used: true}
+    # amps = [tail | new_head]
+    # feedback_runner()
+  end
+
+  # defp feedback_runner(amps, finish, input) do
+  #   first = hd(amps)
+  #   {:output, next_address, memory, value} = operation(memory, next_address, [input])
+  # end
+
   def run(input) do
     # memory = input |> Kino.Input.read() |> strs_to_ints() |> list_to_map()
     memory = input |> strs_to_ints() |> list_to_map()
     part_1(memory)
+    part_2(memory)
+  end
+
+  def test() do
   end
 end
 
+# Day7.test()
+
 File.read!("inputs/07.txt") |> Day7.run()
+
+defmodule Counter do
+  use Agent
+
+  @spec start_link(integer(), atom()) :: any()
+  def start_link(initial_value, tag) do
+    Agent.start_link(fn -> initial_value end, name: tag)
+  end
+
+  def value(tag) do
+    Agent.get(tag, & &1)
+  end
+
+  def increment(tag) do
+    Agent.update(tag, &(&1 + 1))
+  end
+end
+
+Counter.start_link(0, :brave)
+Counter.start_link(0, :benn)
+Counter.value(:brave)
+Counter.increment(:brave)
+Counter.increment(:brave)
+Counter.increment(:brave)
+Counter.value(:brave) |> IO.inspect()
+Counter.value(:benn) |> IO.inspect()
