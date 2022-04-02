@@ -213,20 +213,9 @@ defmodule Day7 do
           }
         )
 
-      feedback_runner(amps, 0)
-      # phases
-      # |> Stream.cycle()
-
-      # |> Enum.reduce_while({computer_map, [0]}, fn
-      #   phase, {cpt_map, :halt} ->
-      #     {:halt, cpt_map[List.last(phases)].outputs |> List.first()}
-
-      #   phase, {cpt_map, outputs} ->
-      #     state = cpt_map[phase]
-      #     {state, outputs} = Computer.process(state, outputs)
-      #     {:cont, {cpt_map |> Map.put(phase, state), outputs}}
-      # end)
+      feedback_runner(amps, List.last(phases))
     end)
+    |> Enum.max()
   end
 
   defp runner(memory, phases) do
@@ -236,27 +225,34 @@ defmodule Day7 do
     end)
   end
 
-  defp feedback_runner(amps, finish) do
+  defp feedback_runner(amps, finish, value \\ 0) do
     [head | tail] = amps
 
-    # {:output, next_address, memory, value} =
-    #   operation(head.memory, head.next_pointer, [head.phase])
+    if head.is_used === true do
+      case operation(head.memory, head.next_pointer, [value]) do
+        {:output, next_pointer, memory, value} ->
+          new_head = %{head | next_pointer: next_pointer, memory: memory}
 
-    # new_head = %{head | is_used: true}
-    # amps = [tail | new_head]
-    # feedback_runner()
+          amps = tail ++ [new_head]
+          feedback_runner(amps, finish, value)
+
+        {:halt, mem} -> # Halt로 빠져 나오면 안되는데..
+          value
+      end
+    else
+      {:output, next_pointer, memory, value} =
+        operation(head.memory, head.next_pointer, [0, head.phase])
+
+      new_head = %{head | is_used: true, next_pointer: next_pointer, memory: memory}
+      amps = tail ++ [new_head]
+      feedback_runner(amps, finish, value)
+    end
   end
 
-  # defp feedback_runner(amps, finish, input) do
-  #   first = hd(amps)
-  #   {:output, next_address, memory, value} = operation(memory, next_address, [input])
-  # end
-
   def run(input) do
-    # memory = input |> Kino.Input.read() |> strs_to_ints() |> list_to_map()
     memory = input |> strs_to_ints() |> list_to_map()
     part_1(memory)
-    part_2(memory)
+    part_2(memory) |> IO.inspect()
   end
 
   def test() do
@@ -284,11 +280,10 @@ defmodule Counter do
   end
 end
 
-Counter.start_link(0, :brave)
 Counter.start_link(0, :benn)
-Counter.value(:brave)
+Counter.start_link(0, :brave)
 Counter.increment(:brave)
 Counter.increment(:brave)
 Counter.increment(:brave)
-Counter.value(:brave) |> IO.inspect()
-Counter.value(:benn) |> IO.inspect()
+# Counter.value(:brave) |> IO.inspect()
+# Counter.value(:benn) |> IO.inspect()
