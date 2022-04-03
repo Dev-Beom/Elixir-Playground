@@ -165,8 +165,8 @@ defmodule Day9 do
   end
 
   defp offer_input(context, element), do: %{context | input: [element | context.input]}
-  defp poll_first_output(%{output: [h | t]}=context), do: {h, %{context | output: t}}
-  defp poll_first_output(%{output: []}=context), do: {nil, context}
+  defp poll_first_output(%{output: [h | t]} = context), do: {h, %{context | output: t}}
+  defp poll_first_output(%{output: []} = context), do: {nil, context}
 
   defp part_1(memory) do
     memory
