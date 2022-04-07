@@ -1,106 +1,79 @@
-# 탄젠트 계산
-# https://spiralmoon.tistory.com/entry/%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%98%EB%B0%8D-%EC%9D%B4%EB%A1%A0-%EB%91%90-%EC%A0%90-%EC%82%AC%EC%9D%B4%EC%9D%98-%EC%A0%88%EB%8C%80%EA%B0%81%EB%8F%84%EB%A5%BC-%EC%9E%AC%EB%8A%94-atan2
-
-# 1. 개행으로 문자 나누기
-# 2. 2중 포문(x, y)으로 읽어가면서 .이 아니고 #이면 좌표값 맵에 데이터 넣기
-# key: index, value: {x, y}
-
-# 3. visited 배열 만들기  - 여기는 방문한 각도를 넣을 것
-# 배열말고 set으로 할까
-# 4. 중앙부터 전파하면서 level을 + 1씩 해서 찾기
-
-# 가령 기준점 x=3,y=3, level=1 이면 ㄱ
-
-# {x-level, y}, {x+level, y} = {2, 3}, {4, 3} ㄴ
-# {x, y-level}, {x, y+level} = {3, 2}, {3, 4} ㄴ
-# {x-level, y-level}, {x+level, y+level} = {2, 2}, {4, 4} ㄷ
-# {x-level, y+level}, {x+level, y-level} = {2, 4}, {4, 2} ㄷ
-
-# ㅁㅁㅁㅁㅁㅁ
-# ㅁㅁㅁㅁㅁㅁ
-# ㅁㅁㄷㄴㄷㅁ
-# ㅁㅁㄴㄱㄴㅁ
-# ㅁㅁㄷㄴㄷㅁ
-# ㅁㅁㅁㅁㅁㅁ
-
-# x=3, y=3, level=2이면 ㄱ
-
-# {x-level, y}, {x+level, y} = {1, 3}, {5, 3} ㄴ
-# {x, y-level}, {x, y+level} = {3, 1}, {3, 5} ㄴ
-# {x-level, y-level}, {x+level, y+level} = {1, 1}, {5, 5} ㄷ
-# {x-level, y+level}, {x+level, y-level} = {1, 5}, {5, 1} ㄷ
-
-# ㅁㅁㅁㅁㅁㅁ
-# ㅁㄷㅁㄴㅁㄷ
-# ㅁㅁㅁㅁㅁㅁ
-# ㅁㄴㅁㄱㅁㄴ
-# ㅁㅁㅁㅁㅁㅁ
-# ㅁㄷㅁㄴㅁㄷ
-
-# 너무 귀찮아진다.
-# 생각해보니 이렇게 까지 안해도 바로 확인하면 가능
-# 어차피 유일한 1개의 숫자만 뽑으면 됨.
-
-# 2번문제에서 여러개 찾아야 하는건
-# 여러개 넣고 가장 거리가 짧은걸 체크하고 날려버리면 된다.
-
-# 일단 모두 각도를 계산하고 넣는다.
-# 그리고 각도로 정렬한다.
-# 같은 각도로 있는 친구들을 위해 배열로 넣는다.
-# [
-#     %{x: x, y: y, radian: radian, isBoom: false},
-#     %{x: x, y: y, radian: radian, isBoom: false},
-#     %{x: x, y: y, radian: radian, isBoom: false},
-#     %{x: x, y: y, radian: radian, isBoom: false}...
-# ]
-
-# 여기서 중복된 각도를 갖고있으면
-# x, y 절댓값 거리가 X 보다 가까운 친구를 isBoom 시킨다.
 defmodule Day10 do
-  defp str_to_list(str),
+  @char_of_asteroid "#"
+  @char_of_my_location "X"
+
+  def str_to_list(str),
     do: str |> Enum.map(fn line -> line |> String.trim() |> String.graphemes() end)
 
-  @asteroid "#"
-  defp list_to_ast_list(list) do
+  def list_to_ast_list(list) do
     for y <- 0..get_height(list),
         x <- 0..get_width(list),
-        get(list, x, y) === @asteroid do
+        get(list, x, y) === @char_of_asteroid do
       %{x: x, y: y}
     end
   end
 
-  def run(str) do
-    base =
-      str
-      |> str_to_list()
-      |> list_to_ast_list()
+  def find_my_location(list) do
+    for y <- 0..get_height(list),
+        x <- 0..get_width(list),
+        get(list, x, y) === @char_of_my_location do
+      %{x: x, y: y}
+    end
+  end
 
-    base
-    |> Enum.map(fn me ->
-      get_monitoring_cnt(me, base, :sets.new())
+  def part_1(str) do
+    bases = str |> str_to_list() |> list_to_ast_list()
+
+    bases
+    |> Enum.map(fn base ->
+      get_monitoring_cnt(base, bases, :sets.new())
     end)
     |> Enum.max()
     |> IO.inspect()
   end
 
-  defp get(list, x, y), do: Enum.at(list, y) |> Enum.at(x)
-  defp get_height(list), do: length(list) - 1
-  defp get_width(list), do: length(Enum.at(list, 0))
+  def part_2(str) do
+    list = str |> str_to_list()
+    base = list |> find_my_location()
+    targets = list |> list_to_ast_list()
 
-  defp offer(h, t) do
+    targets
+    |> Enum.map(fn target ->
+      get_monitoring_cnt(base, target, :sets.new())
+    end)
+
+    # |> get_radians()
+  end
+
+  def get(list, x, y), do: Enum.at(list, y) |> Enum.at(x)
+  def get_height(list), do: length(list) - 1
+  def get_width(list), do: length(Enum.at(list, 0))
+
+  def offer(h, t) do
     [h | t]
   end
 
-  defp poll([h | t]), do: {h, t}
-  defp poll([]), do: {nil, []}
+  def poll([h | t]), do: {h, t}
+  def poll([]), do: {nil, []}
 
-  defp same?(me, target), do: me.x == target.x && me.y == target.y
+  def same?(me, target), do: me.x == target.x && me.y == target.y
 
-  defp get_radian(base, target), do: :math.atan2(target.x - base.x, target.y - base.y)
+  def get_radian(base, target), do: :math.atan2(target.x - base.x, target.y - base.y)
 
-  defp get_monitoring_cnt(_, [], set), do: :sets.size(set)
+  def get_degree(base, target) do
+    get_radian(base, target) * 180 / :math.pi()
+  end
 
-  defp get_monitoring_cnt(me, others, set) do
+  def get_radians(base, targets) do
+    targets
+    |> Enum.map(fn e ->
+      %{e | radian: get_radian(base, e)}
+    end)
+  end
+
+  def get_monitoring_cnt(_, [], set), do: :sets.size(set)
+
+  def get_monitoring_cnt(me, others, set) do
     {target, tail} = others |> poll()
 
     if same?(me, target) do
@@ -110,6 +83,46 @@ defmodule Day10 do
       get_monitoring_cnt(me, tail, :sets.add_element(radian, set))
     end
   end
+
+  def add_custom_set(list, element) do
+    cnt = Enum.count(list, &(&1.radian == element.radian))
+
+    if cnt > 0 do
+      [list | element]
+    else
+      list
+    end
+  end
 end
 
-File.stream!("inputs/10.txt") |> Day10.run()
+File.stream!("inputs/10.txt") |> Day10.part_1()
+# File.stream!("inputs/10.txt") |> Day10.part_2()
+
+base = %{x: 2, y: 2}
+
+# 위쪽 방향
+target_up = %{x: 2, y: 1}
+target_up2 = %{x: 2, y: 0}
+# 위 오른쪽 방향
+target_up_right = %{x: 3, y: 1}
+target_up_right2 = %{x: 4, y: 1}
+target_up_right2 = %{x: 10, y: 1}
+# 오른쪽 방향
+target_right = %{x: 3, y: 2}
+# 왼쪽 방향
+target_left = %{x: 1, y: 2}
+# 아래쪽 방향
+target_down = %{x: 2, y: 3}
+
+Day10.get_radian(base, target_up) |> IO.inspect()
+Day10.get_radian(base, target_up2) |> IO.inspect()
+Day10.get_radian(base, target_up_right) |> IO.inspect()
+Day10.get_radian(base, target_up_right2) |> IO.inspect()
+Day10.get_radian(base, target_right) |> IO.inspect()
+Day10.get_radian(base, target_down) |> IO.inspect()
+Day10.get_radian(base, target_left) |> IO.inspect()
+
+tmp = [%{x: 1, y: 2}, %{x: 2, y: 2}]
+tmp |> IO.inspect()
+Enum.member?(tmp, %{x: 1}) |> IO.inspect()
+Enum.count(tmp, fn e -> e.y == 2 end) |> IO.inspect()
