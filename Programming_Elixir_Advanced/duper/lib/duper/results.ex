@@ -4,7 +4,7 @@ defmodule Duper.Results do
   처음 시작할 때는 빈 맵을 상태로 가짐
   맵의 Key는 파일의 해시, Value는 그 해시를 갖는 하나 이상의 파일 경로의 리스트
   
-  Results 서버는 두개의 API를 제공한다.an
+  Results 서버는 두개의 API를 제공한다.
   """
   use GenServer
 
