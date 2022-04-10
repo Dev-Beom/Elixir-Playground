@@ -24,7 +24,6 @@ defmodule Duper.Results do
   end
 
   # Server
-
   def init(:no_args) do
     {:ok, %{}}
   end
