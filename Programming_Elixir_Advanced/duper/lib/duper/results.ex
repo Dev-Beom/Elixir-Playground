@@ -37,7 +37,7 @@ defmodule Duper.Results do
   end
 
   @doc """
-  같은 해시에 경로가 여러 개인 항목(중복된 파일)을 조회하기 위한 하무
+  같은 해시에 경로가 여러 개인 항목(중복된 파일)을 조회하기 위한 함수
   """
   def handle_call(:find_duplicates, _from, results) do
     {:reply, hashes_with_more_than_one_path(results), results}
