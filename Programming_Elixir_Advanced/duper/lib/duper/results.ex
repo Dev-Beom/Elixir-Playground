@@ -10,7 +10,6 @@ defmodule Duper.Results do
 
   @me __MODULE__
 
-  # API
   def start_link(_) do
     GenServer.start_link(@me, :no_args, name: @me)
   end
@@ -23,7 +22,6 @@ defmodule Duper.Results do
     GenServer.call(@me, :find_duplicates)
   end
 
-  # Server
   def init(:no_args) do
     {:ok, %{}}
   end
