@@ -7,7 +7,8 @@ defmodule Duper.Application do
       Duper.Results,
       # 탐색할 디렉터리 트리의 최상위 경로를 파라미터로 전달해야 하기 때문에 "."
       {Duper.PathFinder, "."}
-      Duper.WorkerSupervisor
+      Duper.WorkerSupervisor,
+      {Duper.Gatherer, 1},
     ]
 
     opts = [strategy: :one_for_all, name: Duper.Supervisor]
