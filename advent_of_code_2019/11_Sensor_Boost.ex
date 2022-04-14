@@ -133,8 +133,8 @@ defmodule Day11 do
 
   defp read_input(context, modes) do
     addr_mode_result = {context.address + 1, mode(modes, 0)}
-    [head | tail] = context.input
-    # Camera Access and get current panel Value
+    [head | tail] = [get_color(context) | context.input]
+
     %{
       context
       | address: context.address + 2,
@@ -145,7 +145,16 @@ defmodule Day11 do
 
   defp write_output(context, modes) do
     value = get(context, {context.address + 1, mode(modes, 0)})
-    %{context | address: context.address + 2, output: context.output ++ [value]}
+    new_output = context.output ++ [value]
+
+    if length(new_output) >= 2 do
+      [draw_color, direction] = new_output
+      context = draw_color(context, draw_color) |> turn(direction) |> move()
+
+      %{context | address: context.address + 2, output: []}
+    else
+      %{context | address: context.address + 2, output: context.output ++ [value]}
+    end
   end
 
   defp update_relative_base(context, modes) do
@@ -176,9 +185,81 @@ defmodule Day11 do
   @white_color 1
   defp generate_board_context() do
     %{
-      map: [%{x: 0, y: 0, count: 0, color: @black_color}],
-      current_position: %{x: 0, y: 0, d: 0}
+      map_info: [
+        %{x: 0, y: 0, count: 0, color: @black_color}
+      ],
+      current_position: %{x: 0, y: 0, direction: 0}
     }
+  end
+
+  defp get_color(%{board: board_context} = _context) do
+    %{color: color} =
+      board_context.map_info
+      |> Enum.filter(fn %{x: x, y: y} ->
+        board_context.current_position.x == x and board_context.current_position.y == y
+      end)
+      |> Enum.at(0)
+
+    color
+  end
+
+  defp draw_color(%{board: board_context} = context, color) do
+    %{x: x, y: y} = board_context.current_position
+
+    new_board_context_map_info =
+      board_context.map_info
+      |> Enum.map(fn e ->
+        if e.x == x and e.y == y do
+          %{e | count: e.count + 1, color: color}
+        else
+          e
+        end
+      end)
+
+    new_board_context = %{board_context | map_info: new_board_context_map_info}
+    %{context | board: new_board_context}
+  end
+
+  @turn_left 0
+  @turn_right 1
+  defp turn(%{board: board} = context, oper) when is_integer(oper) do
+    direction = context.board.current_position.direction
+
+    new_direction =
+      case oper do
+        @turn_right -> rem(direction + 1, 4)
+        @turn_left -> rem(direction - 1 + 4, 4)
+      end
+
+    new_board =
+      Map.update(board, :current_position, nil, fn %{x: x, y: y, direction: direction} ->
+        %{x: x, y: y, direction: new_direction}
+      end)
+
+    %{context | board: new_board}
+  end
+
+  defp move(%{board: board} = context) do
+    x_arr = [0, 1, 0, -1]
+    y_arr = [-1, 0, 1, 0]
+    curr_position = board.current_position
+
+    [new_x, new_y] = [
+      curr_position.x + Enum.at(x_arr, curr_position.direction),
+      curr_position.y + Enum.at(y_arr, curr_position.direction)
+    ]
+
+    new_current_position = %{curr_position | x: new_x, y: new_y}
+
+    new_map_info =
+      case Enum.count(board.map_info, fn e -> e.x == new_x and e.y == new_y end) do
+        0 -> [%{color: 0, count: 0, x: new_x, y: new_y} | board.map_info]
+        _ -> board.map_info
+      end
+
+    new_board = %{current_position: new_current_position, map_info: new_map_info}
+
+    %{context | board: new_board}
   end
 
   defp offer_input(context, element), do: %{context | input: [element | context.input]}
@@ -186,12 +267,9 @@ defmodule Day11 do
   defp poll_first_output(%{output: []} = context), do: {nil, context}
 
   defp part_1(memory) do
-    memory
-    |> generate_context()
-    |> offer_input(1)
-    |> operation()
-    |> poll_first_output()
-    |> elem(0)
+    result = memory |> generate_context() |> operation()
+    length(result.board.map_info) |> IO.inspect()
+    Enum.count(result.board.map_info, fn e -> e.count > 0 end)
   end
 
   defp part_2(memory) do
@@ -205,8 +283,8 @@ defmodule Day11 do
   def run(input) do
     memory = input |> strs_to_ints() |> list_to_map()
     part_1(memory) |> IO.inspect()
-    part_2(memory) |> IO.inspect()
+    # part_2(memory) |> IO.inspect()
   end
 end
 
-File.read!("inputs/09.txt") |> Day11.run()
+File.read!("inputs/11.txt") |> Day11.run()

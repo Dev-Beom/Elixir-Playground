@@ -23,6 +23,8 @@ defmodule OtpStack.MixProject do
   end
 
   defp deps do
-    []
+    [
+      {:distillery, "~> 2.1", runtime: false},
+    ]
   end
 end
