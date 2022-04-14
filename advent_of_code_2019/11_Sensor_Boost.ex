@@ -39,16 +39,16 @@ defmodule Day11 do
 
   defp process(%{memory: memory, address: address} = context) do
     case Map.get(memory, address) |> opcode_and_modes() do
-      {1, modes} -> add(context, modes)
-      {2, modes} -> mul(context, modes)
-      {3, modes} -> read_input(context, modes)
-      {4, modes} -> write_output(context, modes)
-      {5, modes} -> jump_if_true(context, modes)
-      {6, modes} -> jump_if_false(context, modes)
-      {7, modes} -> less_then(context, modes)
-      {8, modes} -> equals(context, modes)
-      {9, modes} -> update_relative_base(context, modes)
-      {99, _} -> %{context | halted: true}
+      {@opcode_add, modes} -> add(context, modes)
+      {@opcode_mul, modes} -> mul(context, modes)
+      {@opcode_input, modes} -> read_input(context, modes)
+      {@opcode_output, modes} -> write_output(context, modes)
+      {@opcode_jump_if_true, modes} -> jump_if_true(context, modes)
+      {@opcode_jump_if_false, modes} -> jump_if_false(context, modes)
+      {@opcode_less_then, modes} -> less_then(context, modes)
+      {@opcode_equals, modes} -> equals(context, modes)
+      {@opcode_update_relative_base, modes} -> update_relative_base(context, modes)
+      {@opcode_exit, _} -> %{context | halted: true}
     end
   end
 
@@ -169,7 +169,7 @@ defmodule Day11 do
     end
   end
 
-  defp generate_context(memory, input \\ []) do
+  defp generate_context(memory, board_context, input \\ []) do
     %{
       memory: memory,
       address: 0,
@@ -177,16 +177,14 @@ defmodule Day11 do
       output: [],
       halted: false,
       relative_base: 0,
-      board: generate_board_context()
+      board: board_context
     }
   end
 
-  @black_color 0
-  @white_color 1
-  defp generate_board_context() do
+  defp generate_board_context(start_color) do
     %{
       map_info: [
-        %{x: 0, y: 0, count: 0, color: @black_color}
+        %{x: 0, y: 0, count: 0, color: start_color}
       ],
       current_position: %{x: 0, y: 0, direction: 0}
     }
@@ -195,7 +193,7 @@ defmodule Day11 do
   defp get_color(%{board: board_context} = _context) do
     %{color: color} =
       board_context.map_info
-      |> Enum.filter(fn %{x: x, y: y} ->
+      |> Stream.filter(fn %{x: x, y: y} ->
         board_context.current_position.x == x and board_context.current_position.y == y
       end)
       |> Enum.at(0)
@@ -232,7 +230,7 @@ defmodule Day11 do
       end
 
     new_board =
-      Map.update(board, :current_position, nil, fn %{x: x, y: y, direction: direction} ->
+      Map.update(board, :current_position, nil, fn %{x: x, y: y, direction: _direction} ->
         %{x: x, y: y, direction: new_direction}
       end)
 
@@ -262,28 +260,47 @@ defmodule Day11 do
     %{context | board: new_board}
   end
 
-  defp offer_input(context, element), do: %{context | input: [element | context.input]}
   defp poll_first_output(%{output: [h | t]} = context), do: {h, %{context | output: t}}
   defp poll_first_output(%{output: []} = context), do: {nil, context}
 
+
+
+  @black_color 0
+  @white_color 1
   defp part_1(memory) do
-    result = memory |> generate_context() |> operation()
-    length(result.board.map_info) |> IO.inspect()
-    Enum.count(result.board.map_info, fn e -> e.count > 0 end)
+    result = memory |> generate_context(generate_board_context(@black_color)) |> operation()
+    map_info = result.board.map_info
+    length(map_info)
   end
 
   defp part_2(memory) do
-    memory
-    |> generate_context()
-    |> offer_input(2)
-    |> operation()
-    |> Map.get(:output)
+    result = memory |> generate_context(generate_board_context(@white_color)) |> operation()
+    map_info = result.board.map_info
+    {%{x: x_min}, %{x: x_max}} = Enum.min_max_by(map_info, &(&1.x))
+    {%{y: y_min}, %{y: y_max}} = Enum.min_max_by(map_info, &(&1.y))
+
+    for y <- y_min..y_max do
+      for x <- x_min..x_max do
+        find = Enum.filter(map_info, &(&1.x == x and &1.y == y))
+
+        if length(find) == 0 do
+          "⬜️"
+        else
+          case Enum.at(find, 0).color do
+            0 -> "⬜️"
+            1 -> "⬛️"
+          end
+        end
+      end
+      |> Enum.join()
+    end
+    |> Enum.join("\n")
   end
 
   def run(input) do
     memory = input |> strs_to_ints() |> list_to_map()
     part_1(memory) |> IO.inspect()
-    # part_2(memory) |> IO.inspect()
+    part_2(memory) |> IO.puts()
   end
 end
 
